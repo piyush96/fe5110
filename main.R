@@ -1,10 +1,15 @@
 # Main program
 
 ## load library
+library(TTR)
 source("lib.R")
 ###############
 
-##code
+## helloworld
 a = 2
 aprime = plusOne(a)
 a
+###############
+
+## main
+
