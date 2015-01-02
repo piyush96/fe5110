@@ -45,6 +45,13 @@ acf(x = diff(coreTr))
 p = 5
 fitTR = arima(as.vector(diff(coreTr)), order = c(p, 0, 0))
 Box.test(fitTR$resid,lag=p+1,fitdf=p)
-autoTr = auto.arima(coreTr, max.p = 20, max.q = 0, ic = "aic")
+autoTr = auto.arima(as.vector( coreTr), max.p = 20, max.q = 0, ic = "aic")
 autoTr
 Box.test(autoTr$resid,lag=10,fitdf=9)
+
+atr_hok2002 = myATR("CME/HOK2002")
+ndays = paste(nrow(atr_hok2002)-1, "days", sep = " ")
+tr_hok2002 = as.vector(last(atr_hok2002, ndays)[, "tr"])
+autoTrHok2002 = auto.arima(tr_hok2002, max.p = 20, max.q = 0, ic = "aic")
+autoTrHok2002
+Box.test(autoTrHok2002$resid,lag=10,fitdf=5)
