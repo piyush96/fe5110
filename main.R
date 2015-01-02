@@ -9,9 +9,9 @@ source("lib.R")
 ###############
 
 ## helloworld
-a = 2
-aprime = plusOne(a)
-tDate = as.Date(x = tDate, format = "%m/%d/%Y")
+#a = 2
+#aprime = plusOne(a)
+#tDate = as.Date(x = tDate, format = "%m/%d/%Y")
 
 ###############
 
@@ -24,3 +24,23 @@ hof2005 = Quandl(code = "CME/HOF2005", type = "xts")
 class(hof2005)
 colnames(hof2005)[6] = "Close"
 atr = ATR(hof2005[,c("High","Low","Close")], n=14)
+class(atr)
+hof2005[,"Close"]
+acf(atr['2003-07-02/'][,"tr"])
+
+# coreTr = coredata(tr)
+# plot(coreTr[1:372], coreTr[2:373])
+# dCoreTr = coreTr[2:373] - coreTr[1:372]
+# plot(dCoreTr[1:371], dCoreTr[2:372])
+
+# data(bmw,package="evir")
+# bmw = as.vector(bmw)
+# n=length(bmw)
+# 
+# fitAR1 = arima(bmw, order = c(1,0, 0))
+# Box.test(fitAR1$resid,lag=2,fitdf=1)
+coreTr = coredata(atr['2003-07-02/'][,"tr"])
+acf(x = coreTr)
+fitTR = arima(as.vector(coreTr), order = c(5, 0, 0))
+Box.test(fitTR$resid,lag=2,fitdf=1)
+
