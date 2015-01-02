@@ -5,6 +5,7 @@ library(TTR)
 #library(quantmod)
 library(Quandl)
 Quandl.auth("SWnAfbKWidzuzbtDBG5_") # users'd better run their own Quandl account
+library(forecast)
 source("lib.R")
 ###############
 
@@ -51,7 +52,8 @@ Box.test(autoTr$resid,lag=10,fitdf=9)
 
 atr_hok2002 = myATR("CME/HOK2002")
 ndays = paste(nrow(atr_hok2002)-1, "days", sep = " ")
-tr_hok2002 = as.vector(last(atr_hok2002, ndays)[, "tr"])
+range = paste(floor(nrow(atr_hok2002)/3*2), "days", sep = " ") #range should be long enough, it is now 2/3 of the entire duration
+tr_hok2002 = as.vector(first(last(atr_hok2002, ndays), range)[, "tr"])
 autoTrHok2002 = auto.arima(tr_hok2002, max.p = 20, max.q = 0, ic = "aic")
 autoTrHok2002
-Box.test(autoTrHok2002$resid,lag=10,fitdf=5)
+Box.test(autoTrHok2002$resid,lag=3,fitdf=2)
