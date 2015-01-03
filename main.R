@@ -6,6 +6,7 @@ library(TTR)
 library(Quandl)
 Quandl.auth("SWnAfbKWidzuzbtDBG5_") # users'd better run their own Quandl account
 library(forecast)
+source("helper.R")
 source("lib.R")
 ###############
 
