@@ -20,15 +20,17 @@ source("lib.R")
 hof2005 = Quandl(code = "CME/HOF2005", type = "xts")
 #class(hof2005)
 #acf(atr['2003-07-02/'][,"tr"])
-atr_hof2005 = CalculateATR(hof2005)
-autoTrHof2005 = ArimaTR(atr_hof2005)
-autoTrHof2005
-Box.test(autoTrHof2005$resid,lag=9,fitdf=8)
+hof2005.atr = CalculateATR(hof2005)
+hof2005.atr.arima.period = CalculateArimaPeriod(hof2005.atr)
+hof2005.atr.arima = ArimaTR(hof2005.atr, hof2005.atr.arima.period)
+hof2005.atr.arima
+Box.test(hof2005.atr.arima$resid,lag=9,fitdf=8)
 
 
 hok2002 = Quandl(code = "CME/HOK2002", type = "xts")
-atr_hok2002 = CalculateATR(hok2002)
-autoTrHok2002 = ArimaTR(atr_hok2002)
-autoTrHok2002
+hok2002.atr = CalculateATR(hok2002)
+hok2002.atr.arima.period = CalculateArimaPeriod(hok2002.atr)
+hok2002.atr.arima = ArimaTR(hok2002.atr, hok2002.atr.arima.period)
+hok2002.atr.arima
 
-Box.test(autoTrHok2002$resid,lag=3,fitdf=2)
+Box.test(hok2002.atr.arima$resid,lag=3,fitdf=2)
