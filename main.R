@@ -30,6 +30,8 @@ Box.test(hof2005.atr.arima$resid,lag=9,fitdf=8)
 hok2002 = Quandl(code = "CME/HOK2002", type = "xts")
 hok2002.atr = CalculateATR(hok2002)
 hok2002.atr.arima.period = CalculateArimaPeriod(hok2002.atr)
+# hok2002[index(hok2002)[hok2002.atr.arima.period+1]] # access data at hok2002.atr.arima.period
+# hok2002.atr[is.na(hok2002.atr$atr)] # the first 20 atr which are NA
 hok2002.atr.arima = ArimaTR(hok2002.atr, hok2002.atr.arima.period)
 hok2002.atr.arima
 

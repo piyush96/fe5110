@@ -20,10 +20,8 @@ CalculateArimaPeriod <- function(p.atr){
 }
 
 ArimaTR <- function(p.atr, p.period){ #p.atr is the return of CalculateATR
-    p.ndays = paste(nrow(p.atr)-1, "days", sep = " ")
     p.range = paste(p.period, "days", sep = " ") 
-    #p.range = paste(RANGE, "days", sep = " ")
-    p.tr = as.vector(first(last(p.atr, p.ndays), p.range)[, "tr"])
+    p.tr = as.vector(first(p.atr[!is.na(p.atr$tr)], p.range)$tr) # exclude the first day which has NA tr-value
     p.autoTR = auto.arima(p.tr, max.p = 20, max.q = 0, ic = "aic")
     return (p.autoTR)
 }
