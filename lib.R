@@ -1,4 +1,8 @@
 ## Constants
+ACCOUNT = 1000000
+UNIT.RATIO = 0.01
+CONTRACT.SIZE = 42000
+
 RANGE = 200 # number of days in True Range time series to construct ARiMA
 RANGE.RATIO = 2/3 # portion of whole duration to construct ARiMA
 ATR.DAYS = 20 # number of days to compute ATR
@@ -7,6 +11,8 @@ BREAKOUT.PERIOD = 20
 HIGH.BREAKOUT = "HIGH.BREAKOUT"
 LOW.BREAKOUT = "LOW.BREAKOUT"
 
+ADDING.UNIT.COEF = 1/2
+STOP.LOSS.COEF = 2
 
 ## Library
 CalculateATR <- function(p.code.data){ # p.code.data is a xts returned from Quandl
@@ -44,8 +50,8 @@ DoBreakout <- function(p.xts, p.date){
         return (NA)
     }
     
-    p.high = max(p.xts$High[p.i - BREAKOUT_PERIOD : p.i - 1]) 
-    p.low = min(p.xts$Low[p.i - BREAKOUT_PERIOD : p.i - 1])
+    p.high = max(p.xts$High[(p.i - BREAKOUT_PERIOD) : (p.i - 1)]) 
+    p.low = min(p.xts$Low[(p.i - BREAKOUT_PERIOD) : (p.i - 1)])
     
     if (p.xts$High[p.date] > p.high) {
         return (HIGH.BREAKOUT)
@@ -59,3 +65,9 @@ DoBreakout <- function(p.xts, p.date){
 }
 
 # AddUnit <- function()
+
+UpdatePositionSizing <- function(p.pos, p.date) {
+    p.pos$N = p.pos$atr$atr[p.date]
+    p.pos$unit.size = p.pos$capital * UNIT.RATIO / (p.pos$N * CONTRACT.SIZE)
+    return (p.pos)
+}
