@@ -29,3 +29,5 @@ IndexFromDate <- function(p.xts, p.date) {
         return (p.i)
     }
 }
+
+## ping ping
