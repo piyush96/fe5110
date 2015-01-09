@@ -65,30 +65,62 @@ pos = list(
         unit.size = NA
     )
 
-pos$underlying = Quandl(code = "CME/HOK2002", type = "xts")
+underlying = Quandl(code = "CME/HOK2002", type = "xts")
+pos$underlying = underlying
 pos$atr = CalculateATR(pos$underlying)
 pos$capital = ACCOUNT
-pos = UpdatePositionSizing(pos, DateFromIndex(pos$atr, ATR.DAYS + 1))
+pos = UpdatePosition(pos, DateFromIndex(pos$atr, ATR.DAYS + 1))
+n = nrow(pos$underlying)
 
-
-for (i in (BREAKOUT.PERIOD + 1): nrow(pos$underlying) ){
+for (i in (BREAKOUT.PERIOD + 1) : n ){
     date = DateFromIndex(pos$underlying, i)
+    
+    #on Monday, update N
+    if (weekdays(date) == UPDATE.DAY) {
+        pos = UpdatePosition(pos, date)
+    }
+       
     break.out = DoBreakout(pos$underlying, date)
-    if(!is.na(break.out)) {
-        if (break.out == HIGH.BREAKOUT) {
-#             msg = paste("Day:", i,
-#                         "High break out on", date, 
-#                         "with price =", pos$underlying$High[date], 
-#                         sep = " ")
+    if(!is.na(break.out)
+       && pos$load < MAX.LOAD) {
+        if (break.out == HIGH.BREAKOUT
+            && (pos$load == 0 
+                || (!is.na(pos$is.long) && pos$is.long == TRUE))) {
+            
+            msg = paste("Day:", i,
+                        "High break out on", date, 
+                        "with price =", pos$underlying$High[date], 
+                        sep = " ")
+            
+            #going long now
+            if (pos$load == 0){
+                pos$is.long = TRUE    
+            }
+            pos$load = pos$load + 1
+            pos$size = pos$size + pos$unit.size
+            pos$entry.price[pos$load] = pos$underlying$High[date]
+            
+            
         }
         
-        if (break.out == LOW.BREAKOUT) {
-#             msg = paste("Day:", i, 
-#                         "Low break out on", date, 
-#                         "with price =", pos$underlying$Low[date], 
-#                         sep = " ")
+        if (break.out == LOW.BREAKOUT
+            && (pos$load == 0 
+                || (!is.na(pos$is.long) && pos$is.long == FALSE))) {
+            
+            msg = paste("Day:", i, 
+                        "Low break out on", date, 
+                        "with price =", pos$underlying$Low[date], 
+                        sep = " ")
+            
+            #going short now
+            if (pos$load == 0){
+                pos$is.long = FALSE    
+            }
+            pos$load = pos$load + 1
+            pos$size = pos$size - pos$unit.size
+            pos$entry.price[pos$load] = pos$underlying$Low[date]
         }
-#         cat(msg, sep = "\n")
+        cat(msg, sep = "\n")
     }
     
     

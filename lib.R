@@ -2,6 +2,8 @@
 ACCOUNT = 1000000
 UNIT.RATIO = 0.01
 CONTRACT.SIZE = 42000
+UPDATE.DAY = "Monday"
+MAX.LOAD = 4
 
 RANGE = 200 # number of days in True Range time series to construct ARiMA
 RANGE.RATIO = 2/3 # portion of whole duration to construct ARiMA
@@ -66,8 +68,8 @@ DoBreakout <- function(p.xts, p.date){
 
 # AddUnit <- function()
 
-UpdatePositionSizing <- function(p.pos, p.date) {
+UpdatePosition <- function(p.pos, p.date) {
     p.pos$N = p.pos$atr$atr[p.date]
-    p.pos$unit.size = p.pos$capital * UNIT.RATIO / (p.pos$N * CONTRACT.SIZE)
+    p.pos$unit.size = floor(coredata(p.pos$capital * UNIT.RATIO / (p.pos$N * CONTRACT.SIZE))[1])
     return (p.pos)
 }
