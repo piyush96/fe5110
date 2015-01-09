@@ -55,7 +55,7 @@ DoBreakout <- function(p.xts, p.date){
     p.high = max(p.xts$High[(p.i - BREAKOUT_PERIOD) : (p.i - 1)]) 
     p.low = min(p.xts$Low[(p.i - BREAKOUT_PERIOD) : (p.i - 1)])
     
-    if (p.xts$High[p.date] > p.high) {
+    if (p.xts$High[p.date] > p.high) { # prefer high breakout to low breakout
         return (HIGH.BREAKOUT)
     }
     
@@ -68,8 +68,42 @@ DoBreakout <- function(p.xts, p.date){
 
 # AddUnit <- function()
 
-UpdatePosition <- function(p.pos, p.date) {
+UpdateN <- function(p.pos, p.date) {
     p.pos$N = p.pos$atr$atr[p.date]
     p.pos$unit.size = floor(coredata(p.pos$capital * UNIT.RATIO / (p.pos$N * CONTRACT.SIZE))[1])
+    return (p.pos)
+}
+
+DoTrade <- function(p.pos, p.date) {
+    
+        
+    if (p.pos$is.long == TRUE) {
+#         browser()
+        p.price = coredata(p.pos$underlying$High[p.date])[1]
+        p.unit.add = min(1, floor((p.pos$capital + p.pos$cum.value) / (p.price * CONTRACT.SIZE * p.pos$unit.size))) #buy maximum 1 unit at a time
+        if (p.unit.add != 0){
+            p.pos$load = p.pos$load + 1
+            p.pos$size = p.pos$size + p.pos$unit.size * p.unit.add
+            p.pos$cum.value = p.pos$cum.value - p.pos$unit.size * p.unit.add * p.price * CONTRACT.SIZE
+            p.pos$entry.price[p.pos$load] = p.pos$underlying$High[p.date]
+            p.pos$stop.price = p.price - STOP.LOSS.COEF * coredata(p.pos$N)[1]
+        }
+        
+    }
+    
+    if (p.pos$is.long == FALSE) {
+#         browser()
+        p.price = coredata(p.pos$underlying$Low[p.date])[1]
+        p.unit.add = min(1, floor((p.pos$capital - p.pos$cum.value) / (p.price * CONTRACT.SIZE * p.pos$unit.size))) #sell maximum 1 unit at a time
+        if (p.unit.add != 0) {
+            p.pos$load = p.pos$load + 1
+            p.pos$size = p.pos$size - p.pos$unit.size * p.unit.add
+            p.pos$cum.value = p.pos$cum.value + p.pos$unit.size * p.unit.add * p.price * CONTRACT.SIZE
+            p.pos$entry.price[p.pos$load] = p.pos$underlying$Low[p.date]
+            p.pos$stop.price = p.price + STOP.LOSS.COEF * coredata(p.pos$N)[1]
+        }
+        
+    }
+    
     return (p.pos)
 }
