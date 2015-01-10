@@ -10,6 +10,7 @@ RANGE.RATIO = 2/3 # portion of whole duration to construct ARiMA
 ATR.DAYS = 20 # number of days to compute ATR
 
 BREAKOUT.PERIOD = 20
+EXIT.PERIOD = 10
 HIGH.BREAKOUT = "HIGH.BREAKOUT"
 LOW.BREAKOUT = "LOW.BREAKOUT"
 
@@ -42,7 +43,7 @@ ArimaTR <- function(p.atr, p.period){ #p.atr is the return of CalculateATR
 
 # To check whether breakout happens at a particular date
 # date is a string of date YYYY-MM-dd
-DoBreakout <- function(p.xts, p.date){
+EntryBreakout <- function(p.xts, p.date){
     p.i = IndexFromDate(p.xts, p.date)
     if (is.na(p.i)) {
         return (NA)
@@ -64,6 +65,36 @@ DoBreakout <- function(p.xts, p.date){
     }
     
     return (NA)
+}
+
+IsExitBreakout <- function(p.pos, p.date){
+    if (is.na(p.pos$is.long)) { # empty position
+        return (FALSE)
+    }
+    
+    p.i = IndexFromDate(p.pos$underlying, p.date)
+    if (is.na(p.i)) { # wrong date
+        return (FALSE)
+    }
+    
+    if (p.i <= EXIT.PERIOD) { # not long enough
+        return (FALSE)
+    }
+    
+    if (p.pos$is.long == TRUE) {
+        p.low = min(p.pos$underlying$High[(p.i - EXIT.PERIOD) : (p.i - 1)])
+        if (p.pos$underlying$Open[p.date] <= p.low) {
+            return (TRUE)
+        }
+    }
+    else if (p.pos$is.long == FALSE) {
+        p.high = max(p.pos$underlying$Low[(p.i - EXIT.PERIOD) : (p.i - 1)])
+        if (p.pos$underlying$Open[p.date] >= p.high) {
+            return (TRUE)
+        }
+    }
+    
+    return (FALSE)
 }
 
 # AddUnit <- function()

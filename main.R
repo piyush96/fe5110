@@ -77,8 +77,19 @@ Run <- function (){
             }
         }
         
+        #Exit at open price
+        if (IsExitBreakout(pos, date) == TRUE) {
+            today.price = coredata(pos$underlying$Open[date])[1]
+            msg = paste("Day: ", i,
+                        "Exits, exit position at price:", today.price, 
+                        "; size:", pos$size, sep = " ")
+            pos = ExitPosition(pos, today.price)
+            cat(msg, sep = "\n")
+            break 
+        }
         
-        break.out = DoBreakout(pos$underlying, date)
+        
+        break.out = EntryBreakout(pos$underlying, date)
         
         #entering a position
         if(!is.na(break.out)
