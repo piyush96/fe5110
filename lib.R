@@ -80,11 +80,11 @@ DoTrade <- function(p.pos, p.date) {
     if (p.pos$is.long == TRUE) {
 #         browser()
         p.price = coredata(p.pos$underlying$High[p.date])[1]
-        p.unit.add = min(1, floor((p.pos$capital + p.pos$cum.value) / (p.price * CONTRACT.SIZE * p.pos$unit.size))) #buy maximum 1 unit at a time
+        p.unit.add = min(1, floor((p.pos$capital - abs(p.pos$cum.value)) / (p.price * CONTRACT.SIZE * p.pos$unit.size))) #buy maximum 1 unit at a time
         if (p.unit.add != 0){
             p.pos$load = p.pos$load + 1
             p.pos$size = p.pos$size + p.pos$unit.size * p.unit.add
-            p.pos$cum.value = p.pos$cum.value - p.pos$unit.size * p.unit.add * p.price * CONTRACT.SIZE
+            p.pos$cum.value = p.pos$cum.value + p.pos$unit.size * p.unit.add * p.price * CONTRACT.SIZE
             p.pos$entry.price[p.pos$load] = p.pos$underlying$High[p.date]
             p.pos$stop.price = p.price - STOP.LOSS.COEF * coredata(p.pos$N)[1]
         }
@@ -94,16 +94,77 @@ DoTrade <- function(p.pos, p.date) {
     if (p.pos$is.long == FALSE) {
 #         browser()
         p.price = coredata(p.pos$underlying$Low[p.date])[1]
-        p.unit.add = min(1, floor((p.pos$capital - p.pos$cum.value) / (p.price * CONTRACT.SIZE * p.pos$unit.size))) #sell maximum 1 unit at a time
+        p.unit.add = min(1, floor((p.pos$capital - abs(p.pos$cum.value)) / (p.price * CONTRACT.SIZE * p.pos$unit.size))) #sell maximum 1 unit at a time
         if (p.unit.add != 0) {
             p.pos$load = p.pos$load + 1
             p.pos$size = p.pos$size - p.pos$unit.size * p.unit.add
-            p.pos$cum.value = p.pos$cum.value + p.pos$unit.size * p.unit.add * p.price * CONTRACT.SIZE
+            p.pos$cum.value = p.pos$cum.value - p.pos$unit.size * p.unit.add * p.price * CONTRACT.SIZE
             p.pos$entry.price[p.pos$load] = p.pos$underlying$Low[p.date]
             p.pos$stop.price = p.price + STOP.LOSS.COEF * coredata(p.pos$N)[1]
         }
         
     }
+    
+    msg = paste(p.date, "cumulative value:", p.pos$cum.value, sep = " ")
+    cat(msg, sep = "\n")
+    return (p.pos)
+}
+
+# p.underlying is a quandl contract code
+NewPosition <- function(p.underlying = NA) {
+    # position members
+    # is.long: TRUE means long pos, FALSE means short pos
+    # size: position size
+    # capital: the total amount of money
+    # cum.value: cumulative transaction money
+    # N: to be updated every Monday
+    # entry: a vector of 4 indicating the entry/adding prices
+    # next.breakout.price: price to add more units
+    # load: how many units already taken, maximum = 4
+    # underlying: the prices of the future contract
+    # atr: average true range
+    # unit.size
+    
+    # initialize a position on a future contract 
+    p.pos = list(
+        is.long     = NA,
+        size        = 0,
+        capital     = 0,
+        cum.value   = 0,
+        N           = NA,
+        entry.price       = c(first = NA, second = NA, third = NA, fourth = NA),
+        stop.price  = NA,
+        next.breakout.price = NA,
+        load        = 0,
+        underlying  = NA,
+        atr         = NA,
+        unit.size = NA
+    )
+    
+    if (!is.na(p.underlying)) {
+        p.pos$underlying = Quandl(code = p.underlying, type = "xts")
+    }
+    return (p.pos)
+}
+
+InitPosition <- function (p.pos) {
+    p.pos$atr = CalculateATR(p.pos$underlying)
+    p.pos$capital = ACCOUNT
+    p.pos = UpdateN(p.pos, DateFromIndex(p.pos$atr, ATR.DAYS + 1))
+    return (p.pos)
+}
+
+ExitPosition <- function (p.pos, p.price){
+    p.money = p.price * CONTRACT.SIZE * p.pos$size
+    p.pos$cum.value = p.pos$cum.value - p.money
+#     if (p.pos$is.long == TRUE) {
+#         p.pos$cum.value = p.pos$cum.value + p.money
+#     }
+#     else {
+#         p.pos$cum.value = p.pos$cum.value - p.money
+#     }
+    p.pos$size = 0
+    p.pos$stop.price = NA
     
     return (p.pos)
 }
