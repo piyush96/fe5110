@@ -90,7 +90,7 @@ Run <- function (){
                 
                 msg = paste("Day:", i,
                             "High break out on", date, 
-                            "with price =", pos$underlying$High[date], 
+                            "with price =", pos$underlying$Open[date], 
                             sep = " ")
                 
                 #going long now
@@ -107,10 +107,10 @@ Run <- function (){
             if (break.out == LOW.BREAKOUT
                 && (pos$load == 0 
                     || (!is.na(pos$is.long) && pos$is.long == FALSE))) {
-if (i == 36) {browser()}
+# if (i == 36) {browser()}
                 msg = paste("Day:", i, 
                             "Low break out on", date, 
-                            "with price =", pos$underlying$Low[date], 
+                            "with price =", pos$underlying$Open[date], 
                             sep = " ")
                 
                 #going short now
