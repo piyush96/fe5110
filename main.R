@@ -52,13 +52,35 @@ Run <- function (){
     pos = InitPosition(pos)
     #---------------------------------------------------
     
-    
+    pnl = 0
+    n = nrow(pos$underlying)
+
+    pnl.trace = xts(vector("numeric", n), index(pos$underlying))
     for (i in (BREAKOUT.PERIOD + 1) : n ){
         date = DateFromIndex(pos$underlying, i)
         
         #on Monday, update N
         if (weekdays(date) == UPDATE.DAY) {
             pos = UpdateN(pos, date)
+        }
+        
+        #unwind position on last day of contract
+        if (!is.na(pos$is.long)
+            && (i == n)) {
+            today.price = coredata(pos$underlying$Open[date])[1]
+            pos = ExitPosition(pos, today.price)
+            pnl = pnl - pos$cum.value
+            
+            pnl.trace[date] = pnl
+            
+            msg = paste("Day: ", i,
+                        "Date: ", date,
+                        "Unwind position, exit position at price:", today.price, 
+                        "; size:", pos$size, 
+                        "; PNL", pnl,
+                        sep = " ")
+            cat(msg, sep = "\n")
+            break 
         }
         
         #stop loss at open price
@@ -68,24 +90,40 @@ Run <- function (){
             if ((pos$is.long == TRUE && today.price <= pos$stop.price)
                 || (pos$is.long == FALSE && today.price >= pos$stop.price)
                 ) {
-                msg = paste("Day: ", i,
-                            "Stop loss, exit position at price:", today.price, 
-                            "; size:", pos$size, sep = " ")
                 pos = ExitPosition(pos, today.price)
+                pnl = pnl - pos$cum.value
+                
+                pnl.trace[date] = pnl
+                
+                msg = paste("Day: ", i,
+                            "Date: ", date,
+                            "Stop loss, exit position at price:", today.price, 
+                            "; size:", pos$size,
+                            "; PNL:", pnl,
+                            sep = " ")
                 cat(msg, sep = "\n")
-                break 
+                pos = ResetPosition(pos)
+#                 break 
             }
         }
         
         #Exit at open price
         if (IsExitBreakout(pos, date) == TRUE) {
             today.price = coredata(pos$underlying$Open[date])[1]
-            msg = paste("Day: ", i,
-                        "Exits, exit position at price:", today.price, 
-                        "; size:", pos$size, sep = " ")
             pos = ExitPosition(pos, today.price)
+            pnl = pnl - pos$cum.value
+            
+            pnl.trace[date] = pnl
+            
+            msg = paste("Day: ", i,
+                        "Date: ", date,
+                        "Exits, exit position at price:", today.price, 
+                        "; size:", pos$size,
+                        "; PNL:", pnl,
+                        sep = " ")
             cat(msg, sep = "\n")
-            break 
+            pos = ResetPosition(pos)
+#             break 
         }
         
         
@@ -138,9 +176,15 @@ Run <- function (){
         
     }
 
-browser()
+#browser()
+    return (list(
+                pnl = pnl,
+                pnl.trace = pnl.trace
+        ))
 }
 
 underlying = Quandl(code = "CME/HOK2002", type = "xts")
-Run()
-
+ret = Run()
+par(mfrow=c(2,1))
+plot(ret$pnl.trace)
+plot(underlying$Open)

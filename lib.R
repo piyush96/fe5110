@@ -178,6 +178,17 @@ NewPosition <- function(p.underlying = NA) {
     return (p.pos)
 }
 
+ResetPosition <- function (p.pos) {
+    p.pos$is.long     = NA
+    p.pos$size        = 0
+    p.pos$cum.value   = 0
+    p.pos$entry.price       = c(first = NA, second = NA, third = NA, fourth = NA)
+    p.pos$stop.price  = NA
+    p.pos$next.breakout.price = NA
+    p.pos$load        = 0
+    return (p.pos)
+}
+
 InitPosition <- function (p.pos) {
     p.pos$atr = CalculateATR(p.pos$underlying)
     p.pos$capital = ACCOUNT
@@ -199,3 +210,4 @@ ExitPosition <- function (p.pos, p.price){
     
     return (p.pos)
 }
+
