@@ -41,6 +41,24 @@ ArimaTR <- function(p.atr, p.period){ #p.atr is the return of CalculateATR
     return (p.autoTR)
 }
 
+PredictN <- function(p.pos, p.date){ # for AR model only
+    p.i = IndexFromDate(p.pos$atr, p.date)
+    coef = p.pos$arima.tr$coef
+    n = length(coef)
+    if (is.na(coef["intercept"])) {
+        ar = rev(as.vector(p.pos$atr$tr[(i - n + 1) : i]))
+    }
+    else {
+        ar = c(rev(as.vector(p.pos$atr$tr[(i - n + 2) : i])) , 1)
+    }
+    prd.tr = coef %*% ar
+    
+    
+    p.pos$N = (coredata(p.pos$atr$atr[p.i - 1]) * (ATR.DAYS - 1) + prd.tr) / ATR.DAYS
+    p.pos$unit.size = floor(coredata(p.pos$capital * UNIT.RATIO / (p.pos$N * CONTRACT.SIZE))[1])
+    return (p.pos)
+}
+
 # To check whether breakout happens at a particular date
 # date is a string of date YYYY-MM-dd
 EntryBreakout <- function(p.xts, p.date){
@@ -105,6 +123,7 @@ UpdateN <- function(p.pos, p.date) {
     return (p.pos)
 }
 
+
 DoTrade <- function(p.pos, p.date) {
     
         
@@ -141,6 +160,114 @@ DoTrade <- function(p.pos, p.date) {
     return (p.pos)
 }
 
+TradeStrategy <- function (pos, date) {
+    last.date = index(last(pos$underlying, '1 day'))[1]
+    #unwind position on last day of contract
+    if (!is.na(pos$is.long)
+        && (date == last.date)) {
+        today.price = coredata(pos$underlying$Open[date])[1]
+        pos = ExitPosition(pos, today.price)
+        pos$pnl = pos$pnl - pos$cum.value
+        
+        pos$pnl.trace[date] = pos$pnl
+        
+#         msg = paste("Day: ", i,
+#                     "Date: ", date,
+#                     "Unwind position, exit position at price:", today.price, 
+#                     "; size:", pos$size, 
+#                     "; PNL", pnl,
+#                     sep = " ")
+#         cat(msg, sep = "\n")
+        break 
+    }
+    
+    #stop loss at open price
+    if (!is.na(pos$stop.price)) {
+        today.price = coredata(pos$underlying$Open[date])[1]
+        
+        if ((pos$is.long == TRUE && today.price <= pos$stop.price)
+            || (pos$is.long == FALSE && today.price >= pos$stop.price)
+        ) {
+            pos = ExitPosition(pos, today.price)
+            pos$pnl = pos$pnl - pos$cum.value
+            
+            pos$pnl.trace[date] = pos$pnl
+            
+#             msg = paste("Day: ", i,
+#                         "Date: ", date,
+#                         "Stop loss, exit position at price:", today.price, 
+#                         "; size:", pos$size,
+#                         "; PNL:", pnl,
+#                         sep = " ")
+#             cat(msg, sep = "\n")
+            pos = ResetPosition(pos)
+            #                 break 
+        }
+    }
+    
+    #Exit at open price
+    if (IsExitBreakout(pos, date) == TRUE) {
+        today.price = coredata(pos$underlying$Open[date])[1]
+        pos = ExitPosition(pos, today.price)
+        pos$pnl = pos$pnl - pos$cum.value
+
+        pos$pnl.trace[date] = pos$pnl
+        
+#         msg = paste("Day: ", i,
+#                     "Date: ", date,
+#                     "Exits, exit position at price:", today.price, 
+#                     "; size:", pos$size,
+#                     "; PNL:", pnl,
+#                     sep = " ")
+#         cat(msg, sep = "\n")
+        pos = ResetPosition(pos)
+        #             break 
+    }
+    
+    
+    break.out = EntryBreakout(pos$underlying, date)
+    
+    #entering a position
+    if(!is.na(break.out)
+       && pos$load < MAX.LOAD) {
+        #         browser()
+        if (break.out == HIGH.BREAKOUT
+            && (pos$load == 0 
+                || (!is.na(pos$is.long) && pos$is.long == TRUE))) {
+            
+            msg = paste("Day:", i,
+                        "High break out on", date, 
+                        "with price =", pos$underlying$Open[date], 
+                        sep = " ")
+            
+            #going long now
+            if (pos$load == 0){
+                pos$is.long = TRUE    
+            }                
+            pos = DoTrade(pos, date)
+        }
+        
+        if (break.out == LOW.BREAKOUT
+            && (pos$load == 0 
+                || (!is.na(pos$is.long) && pos$is.long == FALSE))) {
+            msg = paste("Day:", i, 
+                        "Low break out on", date, 
+                        "with price =", pos$underlying$Open[date], 
+                        sep = " ")
+            
+            #going short now
+            if (pos$load == 0){
+                pos$is.long = FALSE    
+            }
+            pos = DoTrade(pos, date)
+        }
+        cat(msg, sep = "\n")
+    }
+    
+    
+    return (pos)
+}
+
 # p.underlying is a quandl contract code
 NewPosition <- function(p.underlying = NA) {
     # position members
@@ -154,7 +281,10 @@ NewPosition <- function(p.underlying = NA) {
     # load: how many units already taken, maximum = 4
     # underlying: the prices of the future contract
     # atr: average true range
+    # arima.tr: predicting model of true range
     # unit.size
+    # pnl: total pnl
+    # pnl.trace: pnl on each date
     
     # initialize a position on a future contract 
     p.pos = list(
@@ -169,7 +299,10 @@ NewPosition <- function(p.underlying = NA) {
         load        = 0,
         underlying  = NA,
         atr         = NA,
-        unit.size = NA
+        arima.tr    = NA,
+        unit.size = NA,
+        pnl         = 0,
+        pnl.trace = NA
     )
     
     if (!is.na(p.underlying)) {
@@ -186,11 +319,16 @@ ResetPosition <- function (p.pos) {
     p.pos$stop.price  = NA
     p.pos$next.breakout.price = NA
     p.pos$load        = 0
+    # p.pos$arima.tr = NA
     return (p.pos)
 }
 
 InitPosition <- function (p.pos) {
+    n = nrow(p.pos$underlying)   
+    p.pos$pnl.trace = xts(vector("numeric", n), index(p.pos$underlying))
+    
     p.pos$atr = CalculateATR(p.pos$underlying)
+    p.pos$arima.tr = ArimaTR(p.pos$atr$tr, CalculateArimaPeriod(p.pos$atr))
     p.pos$capital = ACCOUNT
     p.pos = UpdateN(p.pos, DateFromIndex(p.pos$atr, ATR.DAYS + 1))
     return (p.pos)
