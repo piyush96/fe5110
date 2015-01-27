@@ -170,7 +170,7 @@ TradeStrategy <- function (pos, date) {
         pos$pnl = pos$pnl - pos$cum.value
         
         pos$pnl.trace[date] = pos$pnl
-        pos$is.realized = TRUE
+#         pos$is.realized = TRUE
 #         msg = paste("Day: ", i,
 #                     "Date: ", date,
 #                     "Unwind position, exit position at price:", today.price, 

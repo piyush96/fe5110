@@ -95,16 +95,29 @@ Run <- function (code, c.size=NA){
 }
 
 underlying = Quandl(code = "CME/HOK2002", type = "xts")
-ret20 = Run("CME/HOK2002", 42000)
 
-# ATR.DAYS = 10
-# BREAKOUT.PERIOD = 10
-# EXIT.PERIOD = 5
-
+#default periods
+ho02 = Run("CME/HOK2002", 42000)
 cocoa00 = Run("ICE/CCH2000", 10)
+
+#shorter periods
+ATR.DAYS <<- 10
+BREAKOUT.PERIOD <<- 10
+EXIT.PERIOD <<- 5
+
+ho02.s = Run("CME/HOK2002", 42000)
+cocoa00.s = Run("ICE/CCH2000", 10)
+
+ho02$pnl
+cocoa00$pnl
+ho02.s$pnl
+cocoa00.s$pnl
+
+
 par(mfrow=c(2,1))
-plot(ret20$pnl.trace)
-plot(underlying$Open)
+plot(ho02$pnl.trace[ho02$pnl.trace != 0])
+plot(cocoa00$pnl.trace[cocoa00$pnl.trace != 0])
+plot(cocoa00.s$pnl.trace[cocoa00.s$pnl.trace != 0])
 
 
 
