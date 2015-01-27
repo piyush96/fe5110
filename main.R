@@ -33,7 +33,8 @@ Box.test(hof2005.tr.arima$resid,lag=9,fitdf=8)
 # hok2002 -----------------------------------------------------------------
 
 
-hok2002 = Quandl(code = "CME/HOK2002", type = "xts")
+hok2002 = Quandl(code = "ICE/CCH2000", type = "xts")
+hok2002 = hok2002[!is.na(hok2002$Open)]
 hok2002.atr = CalculateATR(hok2002)
 hok2002.tr.arima.period = CalculateArimaPeriod(hok2002.atr)
 # hok2002[index(hok2002)[hok2002.atr.arima.period+1]] # access data at hok2002.atr.arima.period
@@ -45,10 +46,14 @@ Box.test(hok2002.atr.arima$resid,lag=3,fitdf=2)
 # hok2002 -----------------------------------------------------------------
 
 
-Run <- function (){
+Run <- function (code, c.size=NA){
+    if (!is.na(c.size)) {
+        CONTRACT.SIZE <<- c.size
+    }
+    
     # initialize position ---------------------------------------------------
-    pos = NewPosition()
-    pos$underlying = underlying
+    pos = NewPosition(code)
+    #pos$underlying = underlying
     pos = InitPosition(pos)
     #---------------------------------------------------
     
@@ -61,25 +66,28 @@ Run <- function (){
     for (i in (BREAKOUT.PERIOD + 1) : n ){
         date = DateFromIndex(pos$underlying, i)
         
+#         if (date == "2000-03-16") {
+#             browser()
+#         }
+        
+        #on Monday, update N
+        if (weekdays(date) == UPDATE.DAY) {
+            pos = UpdateN(pos, date)
+        }
+        pos = TradeStrategy(pos, date)
+ 
+        # predicted position
+        # start trading only after ArimaPeriod
+        #-----------------------------------------------------
         if (i >= prd.start.date) {
-            #on Monday, update N
-            if (weekdays(date) == UPDATE.DAY) {
-                pos = UpdateN(pos, date)
-            }
-            pos = TradeStrategy(pos, date)
-            
-            # predicted position
-            # start trading only after ArimaPeriod
-            #-----------------------------------------------------
-            
-            prd.pos = PredictN(prd.pos, date)
-            prd.pos = TradeStrategy(prd.pos, date)
+#             prd.pos = PredictN(prd.pos, date)
+#             prd.pos = TradeStrategy(prd.pos, date)
         }
         
         #--------------------------------------------------
     }
 
-browser()
+# browser()
     return (list(
                 pnl = pos$pnl,
                 pnl.trace = pos$pnl.trace
@@ -87,7 +95,28 @@ browser()
 }
 
 underlying = Quandl(code = "CME/HOK2002", type = "xts")
-ret = Run()
+ret20 = Run("CME/HOK2002", 42000)
+
+# ATR.DAYS = 10
+# BREAKOUT.PERIOD = 10
+# EXIT.PERIOD = 5
+
+cocoa00 = Run("ICE/CCH2000", 10)
 par(mfrow=c(2,1))
-plot(ret$pnl.trace)
+plot(ret20$pnl.trace)
 plot(underlying$Open)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

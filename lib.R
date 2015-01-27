@@ -1,5 +1,5 @@
 ## Constants
-ACCOUNT = 1000000
+ACCOUNT = 1e7
 UNIT.RATIO = 0.01
 CONTRACT.SIZE = 42000
 UPDATE.DAY = "Monday"
@@ -21,7 +21,7 @@ STOP.LOSS.COEF = 2
 CalculateATR <- function(p.code.data){ # p.code.data is a xts returned from Quandl
     #p.code.data = Quandl(code = _codeName, type = "xts")
     #class(codeData)
-    colnames(p.code.data)[6] = "Close"
+    colnames(p.code.data)[colnames(p.code.data) == "Settle"] = "Close"
     p.atr = ATR(p.code.data[,c("High","Low","Close")], n=ATR.DAYS)
     #class(atr)
     #codeData[,"Close"]
@@ -67,12 +67,12 @@ EntryBreakout <- function(p.xts, p.date){
         return (NA)
     }
     
-    if (p.i <= BREAKOUT_PERIOD) { # not long enough
+    if (p.i <= BREAKOUT.PERIOD) { # not long enough
         return (NA)
     }
     
-    p.high = max(p.xts$High[(p.i - BREAKOUT_PERIOD) : (p.i - 1)]) 
-    p.low = min(p.xts$Low[(p.i - BREAKOUT_PERIOD) : (p.i - 1)])
+    p.high = max(p.xts$High[(p.i - BREAKOUT.PERIOD) : (p.i - 1)]) 
+    p.low = min(p.xts$Low[(p.i - BREAKOUT.PERIOD) : (p.i - 1)])
     
     if (p.xts$Open[p.date] > p.high) { # prefer high breakout to low breakout
         return (HIGH.BREAKOUT)
@@ -170,7 +170,7 @@ TradeStrategy <- function (pos, date) {
         pos$pnl = pos$pnl - pos$cum.value
         
         pos$pnl.trace[date] = pos$pnl
-        
+        pos$is.realized = TRUE
 #         msg = paste("Day: ", i,
 #                     "Date: ", date,
 #                     "Unwind position, exit position at price:", today.price, 
@@ -178,7 +178,7 @@ TradeStrategy <- function (pos, date) {
 #                     "; PNL", pnl,
 #                     sep = " ")
 #         cat(msg, sep = "\n")
-        break 
+
     }
     
     #stop loss at open price
@@ -192,7 +192,7 @@ TradeStrategy <- function (pos, date) {
             pos$pnl = pos$pnl - pos$cum.value
             
             pos$pnl.trace[date] = pos$pnl
-            
+        
 #             msg = paste("Day: ", i,
 #                         "Date: ", date,
 #                         "Stop loss, exit position at price:", today.price, 
@@ -201,7 +201,7 @@ TradeStrategy <- function (pos, date) {
 #                         sep = " ")
 #             cat(msg, sep = "\n")
             pos = ResetPosition(pos)
-            #                 break 
+
         }
     }
     
@@ -212,7 +212,6 @@ TradeStrategy <- function (pos, date) {
         pos$pnl = pos$pnl - pos$cum.value
 
         pos$pnl.trace[date] = pos$pnl
-        
 #         msg = paste("Day: ", i,
 #                     "Date: ", date,
 #                     "Exits, exit position at price:", today.price, 
@@ -221,7 +220,7 @@ TradeStrategy <- function (pos, date) {
 #                     sep = " ")
 #         cat(msg, sep = "\n")
         pos = ResetPosition(pos)
-        #             break 
+
     }
     
     
@@ -235,10 +234,10 @@ TradeStrategy <- function (pos, date) {
             && (pos$load == 0 
                 || (!is.na(pos$is.long) && pos$is.long == TRUE))) {
             
-            msg = paste("Day:", i,
-                        "High break out on", date, 
-                        "with price =", pos$underlying$Open[date], 
-                        sep = " ")
+#             msg = paste("Day:", i,
+#                         "High break out on", date, 
+#                         "with price =", pos$underlying$Open[date], 
+#                         sep = " ")
             
             #going long now
             if (pos$load == 0){
@@ -250,10 +249,10 @@ TradeStrategy <- function (pos, date) {
         if (break.out == LOW.BREAKOUT
             && (pos$load == 0 
                 || (!is.na(pos$is.long) && pos$is.long == FALSE))) {
-            msg = paste("Day:", i, 
-                        "Low break out on", date, 
-                        "with price =", pos$underlying$Open[date], 
-                        sep = " ")
+#             msg = paste("Day:", i, 
+#                         "Low break out on", date, 
+#                         "with price =", pos$underlying$Open[date], 
+#                         sep = " ")
             
             #going short now
             if (pos$load == 0){
@@ -261,7 +260,7 @@ TradeStrategy <- function (pos, date) {
             }
             pos = DoTrade(pos, date)
         }
-        cat(msg, sep = "\n")
+#         cat(msg, sep = "\n")
     }
     
     
@@ -285,6 +284,7 @@ NewPosition <- function(p.underlying = NA) {
     # unit.size
     # pnl: total pnl
     # pnl.trace: pnl on each date
+    # is.realized: TRUE to stop trading the position
     
     # initialize a position on a future contract 
     p.pos = list(
@@ -302,11 +302,13 @@ NewPosition <- function(p.underlying = NA) {
         arima.tr    = NA,
         unit.size = NA,
         pnl         = 0,
-        pnl.trace = NA
+        pnl.trace = NA,
+        is.realized = FALSE
     )
     
     if (!is.na(p.underlying)) {
         p.pos$underlying = Quandl(code = p.underlying, type = "xts")
+        p.pos$underlying = p.pos$underlying[!is.na(p.pos$underlying$Settle)]
     }
     return (p.pos)
 }
