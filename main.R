@@ -97,8 +97,10 @@ Run <- function (code, c.size=NA){
 underlying = Quandl(code = "CME/HOK2002", type = "xts")
 
 #default periods
-ho02 = Run("CME/HOK2002", 42000)
-cocoa00 = Run("ICE/CCH2000", 10)
+ho02 = Run("CME/HOK2002", 42000) # heating oil
+cocoa00 = Run("ICE/CCH2000", 10) # cocoa
+hg02 = Run("CME/HGG2002", 25000) # copper
+si00 = Run("CME/SIH2000", 5000) # silver
 
 #shorter periods
 ATR.DAYS <<- 10
@@ -107,12 +109,17 @@ EXIT.PERIOD <<- 5
 
 ho02.s = Run("CME/HOK2002", 42000)
 cocoa00.s = Run("ICE/CCH2000", 10)
+hg02.s = Run("CME/HGG2002", 25000)
+si00.s = Run("CME/SIH2000", 5000) # silver
 
 ho02$pnl
 cocoa00$pnl
+hg02$pnl
+si00$pnl
 ho02.s$pnl
 cocoa00.s$pnl
-
+hg02.s$pnl
+si00.s$pnl
 
 par(mfrow=c(2,1))
 plot(ho02$pnl.trace[ho02$pnl.trace != 0])
@@ -120,7 +127,7 @@ plot(cocoa00$pnl.trace[cocoa00$pnl.trace != 0])
 plot(cocoa00.s$pnl.trace[cocoa00.s$pnl.trace != 0])
 
 
-
+WritePnl2Csv(ho02)
 
 
 

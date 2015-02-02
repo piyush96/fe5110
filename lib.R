@@ -155,8 +155,8 @@ DoTrade <- function(p.pos, p.date) {
         
     }
     
-    msg = paste(p.date, "cumulative value:", p.pos$cum.value, sep = " ")
-    cat(msg, sep = "\n")
+#     msg = paste(p.date, "cumulative value:", p.pos$cum.value, sep = " ")
+#     cat(msg, sep = "\n")
     return (p.pos)
 }
 
