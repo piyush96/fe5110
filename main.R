@@ -10,40 +10,6 @@ source("helper.R")
 source("lib.R")
 ###############
 
-## helloworld --------------------------------------
-#a = 2
-#aprime = plusOne(a)
-#tDate = as.Date(x = tDate, format = "%m/%d/%Y")
-
-###############
-
-## main ---------------------------------------
-#class(hof2005)
-#acf(atr['2003-07-02/'][,"tr"])
-# hof2005 -----------------------------------------------------------------
-hof2005 = Quandl(code = "CME/HOF2005", type = "xts")
-hof2005.atr = CalculateATR(hof2005)
-hof2005.tr.arima.period = CalculateArimaPeriod(hof2005.atr)
-hof2005.tr.arima = ArimaTR(hof2005.atr$tr, hof2005.tr.arima.period)
-hof2005.tr.arima
-Box.test(hof2005.tr.arima$resid,lag=9,fitdf=8)
-# hof2005 -----------------------------------------------------------------
-
-
-# hok2002 -----------------------------------------------------------------
-
-
-hok2002 = Quandl(code = "ICE/CCH2000", type = "xts")
-hok2002 = hok2002[!is.na(hok2002$Open)]
-hok2002.atr = CalculateATR(hok2002)
-hok2002.tr.arima.period = CalculateArimaPeriod(hok2002.atr)
-# hok2002[index(hok2002)[hok2002.atr.arima.period+1]] # access data at hok2002.atr.arima.period
-# hok2002.atr[is.na(hok2002.atr$atr)] # the first 20 atr which are NA
-hok2002.tr.arima = ArimaTR(hok2002.atr$tr, hok2002.tr.arima.period)
-hok2002.tr.arima
-
-Box.test(hok2002.atr.arima$resid,lag=3,fitdf=2)
-# hok2002 -----------------------------------------------------------------
 
 
 Run <- function (code, c.size=NA){
@@ -90,7 +56,8 @@ Run <- function (code, c.size=NA){
 # browser()
     return (list(
                 pnl = pos$pnl,
-                pnl.trace = pos$pnl.trace
+                pnl.trace = pos$pnl.trace,
+                underlying = pos$underlying
         ))
 }
 
@@ -128,7 +95,14 @@ plot(cocoa00.s$pnl.trace[cocoa00.s$pnl.trace != 0])
 
 
 WritePnl2Csv(ho02)
+WritePnl2Csv(cocoa00)
+WritePnl2Csv(hg02)
+WritePnl2Csv(si00)
 
+WritePnl2Csv(ho02.s)
+WritePnl2Csv(cocoa00.s)
+WritePnl2Csv(hg02.s)
+WritePnl2Csv(si00.s)
 
 
 

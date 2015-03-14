@@ -34,10 +34,14 @@ IndexFromDate <- function(p.xts, p.date) {
 # obj is supposed to be a list which has a member pnl.trace of xts class
 WritePnl2Csv <- function(obj, fileName = NA) {
     if (is.na(fileName)) {
-        fileName = paste(deparse(substitute(obj)), ".csv", sep = "")
+        #fileName = paste(deparse(substitute(obj)), ".csv", sep = "")
+        fileName = deparse(substitute(obj))
     }
-    write.zoo(obj$pnl.trace[obj$pnl.trace != 0], file=fileName, sep=",")
-    
+    #write.zoo(obj$pnl.trace[obj$pnl.trace != 0], file=fileName, sep=",")
+    underlyingFile = paste(fileName, ".underlying", ".csv", sep = "")
+    pnlFile = paste(fileName, ".pnl", ".csv", sep = "")
+    write.zoo(obj$underlying, file=underlyingFile, sep=",")
+    write.zoo(obj$pnl.trace, file=pnlFile, sep=",")
 }
 
 
