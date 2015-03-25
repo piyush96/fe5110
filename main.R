@@ -32,9 +32,6 @@ Run <- function (code, c.size=NA){
     for (i in (BREAKOUT.PERIOD + 1) : n ){
         date = DateFromIndex(pos$underlying, i)
         
-#         if (date == "2000-03-16") {
-#             browser()
-#         }
         
         #on Monday, update N
         if (weekdays(date) == UPDATE.DAY) {
@@ -42,15 +39,7 @@ Run <- function (code, c.size=NA){
         }
         pos = TradeStrategy(pos, date)
  
-        # predicted position
-        # start trading only after ArimaPeriod
-        #-----------------------------------------------------
-        if (i >= prd.start.date) {
-#             prd.pos = PredictN(prd.pos, date)
-#             prd.pos = TradeStrategy(prd.pos, date)
-        }
-        
-        #--------------------------------------------------
+
     }
 
 # browser()
@@ -88,10 +77,10 @@ cocoa00.s$pnl
 hg02.s$pnl
 si00.s$pnl
 
-par(mfrow=c(2,1))
-plot(ho02$pnl.trace[ho02$pnl.trace != 0])
-plot(cocoa00$pnl.trace[cocoa00$pnl.trace != 0])
-plot(cocoa00.s$pnl.trace[cocoa00.s$pnl.trace != 0])
+# par(mfrow=c(2,1))
+# plot(ho02$pnl.trace[ho02$pnl.trace != 0])
+# plot(cocoa00$pnl.trace[cocoa00$pnl.trace != 0])
+# plot(cocoa00.s$pnl.trace[cocoa00.s$pnl.trace != 0])
 
 
 WritePnl2Csv(ho02)
@@ -104,7 +93,10 @@ WritePnl2Csv(cocoa00.s)
 WritePnl2Csv(hg02.s)
 WritePnl2Csv(si00.s)
 
-
+# for each pair of variables, e.g. ho02 and ho02.s, make a xlsx file which contains 
+# the pnl in ho02.pnl.csv and ho02.s.pnl.csv
+# and the open price in ho02.underlying.csv. 
+# The xlsx file is used to produced all graphs for the report.
 
 
 

@@ -115,8 +115,8 @@ IsExitBreakout <- function(p.pos, p.date){
     return (FALSE)
 }
 
-# AddUnit <- function()
 
+# to be called on Monday to update N value
 UpdateN <- function(p.pos, p.date) {
     p.pos$N = p.pos$atr$atr[p.date]
     p.pos$unit.size = floor(coredata(p.pos$capital * UNIT.RATIO / (p.pos$N * CONTRACT.SIZE))[1])
